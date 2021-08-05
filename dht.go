@@ -38,6 +38,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+var STFU bool
+
 // SensorType signify what sensor in use.
 type SensorType int
 
@@ -228,11 +230,15 @@ func decodeDHTxxPulses(sensorType SensorType, pulses []Pulse) (temperature float
 			sum, calcSum, b0, b1, b2, b3))
 		return -1, -1, err
 	} else {
-		lg.Debugf("CRCs verified: checksum from sensor(%v) = calculated checksum(%v=%v+%v+%v+%v)",
-			sum, calcSum, b0, b1, b2, b3)
+		if !STFU {
+			lg.Debugf("CRCs verified: checksum from sensor(%v) = calculated checksum(%v=%v+%v+%v+%v)",
+				sum, calcSum, b0, b1, b2, b3)
+		}
 	}
 	// debug output for 5 bytes
-	lg.Debugf("Decoded from DHTxx sensor: [%d, %d, %d, %d, %d]", b0, b1, b2, b3, sum)
+	if !STFU {
+		lg.Debugf("Decoded from DHTxx sensor: [%d, %d, %d, %d, %d]", b0, b1, b2, b3, sum)
+	}
 	// extract temperature and humidity depending on sensor type
 	temperature, humidity = 0.0, 0.0
 	if sensorType == DHT11 {
@@ -269,7 +275,9 @@ func printPulseArrayForDebug(pulses []Pulse) {
 	// 		pulse.Value, pulse.Duration))
 	// }
 	// lg.Debugf("Pulse count %d:\n%v", len(pulses), buf.String())
-	lg.Debugf("Pulses received from DHTxx sensor: %v", pulses)
+	if !STFU {
+		lg.Debugf("Pulses received from DHTxx sensor: %v", pulses)
+	}
 }
 
 // ReadDHTxx send activation request to DHTxx sensor via specific pin.
@@ -366,7 +374,9 @@ func ReadDHTxxWithContextAndRetry(parent context.Context, sensorType SensorType,
 		temp, hum, err := ReadDHTxx(sensorType, pin, boostPerfFlag)
 		if err != nil {
 			if retry > 0 {
-				lg.Warning(err)
+				if !STFU {
+					lg.Warning(err)
+				}
 				retry--
 				retried++
 				select {

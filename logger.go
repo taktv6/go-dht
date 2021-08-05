@@ -1,4 +1,4 @@
-package dht
+package godht
 
 import logger "github.com/d2r2/go-logger"
 
